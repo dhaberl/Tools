@@ -102,3 +102,4 @@ if __name__ == "__main__":
     # Linking
     # export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/dhaberl/Slicer-5.2.2-linux-amd64/lib/Python/lib
     # export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/dhaberl/Slicer-5.2.2-linux-amd64/lib
+    # export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/dhaberl/Slicer-5.2.2-linux-amd64/lib/Slicer-5.2

@@ -38,9 +38,23 @@ def convert_from_folder(csv_file, output_dir, path_to_module, save_meta):
         cmd = f"dcm2niix -o {pet_dir} -z y -f {sample_id + '_PET'} {dicomdir}"
         call(cmd, shell=True)
 
-        # Read out SeriesInstanceUID from one dcm file
-        query_file = natsorted(glob(join(dicomdir, "*")))[0]
-        dcm = pydicom.dcmread(query_file)
+        # Read out SeriesInstanceUID from one dcm file (=query file)
+        # The query file must be a PT file, otherwise we will not get the correct SeriesInstanceUID
+        all_files = natsorted(glob(join(dicomdir, "*")))
+        dcm = pydicom.dcmread(all_files[0])
+
+        # Check if query file is PT file
+        if not dcm.Modality == "PT":
+            print(f"Query file is {dcm.Modality}! Checking another one!")
+            for f in all_files:
+                dcm = pydicom.dcmread(f)
+                if dcm.Modality == "PT":
+                    print(f"Query file is {dcm.Modality}! Sucsess!")
+                    break
+        else:
+            print(f"Query file is {dcm.Modality}! Sucsess!")
+
+        # Read out SeriesInstanceUID
         sid = dcm.SeriesInstanceUID
         print(f"Found Modality: {dcm.Modality}")
         print(f"Found SeriesInstanceUID: {dcm.SeriesInstanceUID}")

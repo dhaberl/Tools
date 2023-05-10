@@ -118,3 +118,4 @@ dmypy.json
 
 # Custom
 tools/harmonization
+tools/suv_conversion/pil_converter.py

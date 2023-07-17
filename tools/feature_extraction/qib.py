@@ -98,7 +98,7 @@ class FeatureExtractor:
         my_neighbors = self._get_neighbours(i[0], j[0], k[0])
 
         my_neighbors_values = []
-        for (i, j, k) in my_neighbors:
+        for i, j, k in my_neighbors:
             if k >= self.img.shape[-1]:
                 continue
             my_neighbors_values.append(suv_masked[i, j, k])
@@ -118,7 +118,7 @@ class FeatureExtractor:
         Calculates the metabolic tumor volume in ml = cm3
         """
         if self.empty:
-            return np.nan
+            return 0
 
         # Count number of voxels which are non-zero
         num_nonzero_voxels = np.count_nonzero(self.seg)
@@ -189,9 +189,7 @@ class FeatureExtractor:
                         a = ic + i
                         b = jc + j
                         c = kc + k
-                        neighbors.append(
-                            (a, b, c)
-                        )  # add the neighbor to the neighbors list
+                        neighbors.append((a, b, c))  # add the neighbor to the neighbors list
 
         return neighbors
 
@@ -228,9 +226,7 @@ class FeatureExtractor:
                 l2 = combination[1]
                 l1_arr = np.where(self.seg == l1, l1, 0)
                 l2_arr = np.where(self.seg == l2, l2, 0)
-                d = self._pairwise_lesion_distance(
-                    l1_arr, l2_arr, self.sitk_seg.GetSpacing()
-                )
+                d = self._pairwise_lesion_distance(l1_arr, l2_arr, self.sitk_seg.GetSpacing())
                 pairwise_distances.append(d)
             # print(pairwise_distances)
             maximum_distance = np.max(pairwise_distances)
@@ -265,11 +261,7 @@ class FeatureExtractor:
         x_sp = spacing[0]
         y_sp = spacing[1]
         z_sp = spacing[2]
-        d2 = (
-            np.square((x1 - x2) * x_sp)
-            + np.square((y1 - y2) * y_sp)
-            + np.square((z1 - z2) * z_sp)
-        )
+        d2 = np.square((x1 - x2) * x_sp) + np.square((y1 - y2) * y_sp) + np.square((z1 - z2) * z_sp)
         d = np.sqrt(d2)
 
         return d

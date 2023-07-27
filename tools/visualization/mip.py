@@ -31,10 +31,7 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=
         pixelid = sitk_image.GetPixelIDValue()
 
         if pixelid not in [1, 2, 4]:
-            raise NotImplementedError(
-                "Set `interpolator` manually, "
-                "can only infer for 8-bit unsigned or 16, 32-bit signed integers"
-            )
+            raise NotImplementedError("Set `interpolator` manually, " "can only infer for 8-bit unsigned or 16, 32-bit signed integers")
         if pixelid == 1:  # 8-bit unsigned int
             interpolator = "nearest"
 
@@ -50,9 +47,7 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=
     else:
         new_spacing = [float(s) for s in spacing]
 
-    assert (
-        interpolator in _SITK_INTERPOLATOR_DICT.keys()
-    ), "`interpolator` should be one of {}".format(_SITK_INTERPOLATOR_DICT.keys())
+    assert interpolator in _SITK_INTERPOLATOR_DICT.keys(), "`interpolator` should be one of {}".format(_SITK_INTERPOLATOR_DICT.keys())
 
     sitk_interpolator = _SITK_INTERPOLATOR_DICT[interpolator]
 
@@ -98,12 +93,8 @@ def make_pet_seg_mip(img_path, mask_path, spacing, view, out_dir, clip_suv, alph
     sitk_mask = sitk.ReadImage(mask_path)
 
     # Resample
-    sitk_img = resample_sitk_image(
-        sitk_img, spacing=spacing, interpolator="bspline", fill_value=0
-    )
-    sitk_mask = resample_sitk_image(
-        sitk_mask, spacing=spacing, interpolator="nearest", fill_value=0
-    )
+    sitk_img = resample_sitk_image(sitk_img, spacing=spacing, interpolator="bspline", fill_value=0)
+    sitk_mask = resample_sitk_image(sitk_mask, spacing=spacing, interpolator="nearest", fill_value=0)
 
     # Get npy array from sitk
     img = sitk.GetArrayFromImage(sitk_img)
@@ -147,9 +138,7 @@ def make_pet_mip(img_path, out_dir, spacing, view, clip_suv):
     sitk_img = sitk.ReadImage(img_path)
 
     # Resample
-    sitk_img = resample_sitk_image(
-        sitk_img, spacing=spacing, interpolator="bspline", fill_value=0
-    )
+    sitk_img = resample_sitk_image(sitk_img, spacing=spacing, interpolator="bspline", fill_value=0)
 
     # Get npy array from sitk
     img = sitk.GetArrayFromImage(sitk_img)
@@ -179,9 +168,7 @@ def make_pet_mip(img_path, out_dir, spacing, view, clip_suv):
     plt.close()
 
 
-def make_mip_from_folder(
-    img_dir, out_dir, spacing, view, clip_suv, alpha=None, mask_dir=None, n_jobs=1
-):
+def make_mip_from_folder(img_dir, out_dir, spacing, view, clip_suv, alpha=None, mask_dir=None, n_jobs=1):
     """Creates maximum intensity projections"""
     img_paths = natsorted(glob(os.path.join(img_dir, "*.nii.gz")))
 
@@ -190,9 +177,7 @@ def make_mip_from_folder(
         mask_state = 1
         mask_paths = natsorted(glob(os.path.join(mask_dir, "*.nii.gz")))
         for img_path, mask_path in zip(img_paths, mask_paths):
-            mp_args.append(
-                (img_path, mask_path, spacing, view, out_dir, clip_suv, alpha)
-            )
+            mp_args.append((img_path, mask_path, spacing, view, out_dir, clip_suv, alpha))
     else:
         mask_state = 0
         for img_path in img_paths:
@@ -210,7 +195,6 @@ def make_mip_from_folder(
 
 
 if __name__ == "__main__":
-
     # Example for overlayed PET/SUV-MIP with SEG-MIP
     make_mip_from_folder(
         img_dir="/path/to/suv_dir",

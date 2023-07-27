@@ -73,11 +73,11 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=
 
 def create_mip(array, axis):
     """Creates MIP along given axis"""
-    if axis == "transversal":
+    if axis == "sagittal":
         mip = np.max(array, axis=0)
     elif axis == "coronal":
         mip = np.max(array, axis=1)
-    elif axis == "sagittal":
+    elif axis == "transversal":
         mip = np.max(array, axis=2)
     else:
         print("Uknown axis name:", axis)

@@ -1,5 +1,6 @@
 import os
 import pathlib as plb
+import sys
 from datetime import timedelta
 from glob import glob
 from multiprocessing import Pool
@@ -10,6 +11,9 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 from natsort import natsorted
+
+sys.path.append("tools/feature_extraction")
+from qib import FeatureExtractor
 
 
 def nii2numpy(nii_path):
@@ -72,6 +76,12 @@ def compute_metrics(sample_id, nii_gt_path, nii_pred_path):
 
     false_neg_vol = false_neg_pix(gt_array, pred_array) * voxel_vol
     false_pos_vol = false_pos_pix(gt_array, pred_array) * voxel_vol
+
+    roi_gt = FeatureExtractor(nii_gt_path, nii_gt_path)
+    mtv_gt = roi_gt.mtv()
+    roi_pred = FeatureExtractor(nii_pred_path, nii_pred_path)
+    mtv_pred = roi_pred.mtv()
+
     if np.unique(gt_array).max() == 0:
         dice_sc = np.nan
     else:
@@ -85,14 +95,18 @@ def compute_metrics(sample_id, nii_gt_path, nii_pred_path):
             "Dice": [dice_sc],
             "FPV": [false_pos_vol],
             "FNV": [false_neg_vol],
+            "MTV_GT": [mtv_gt],
+            "MTV_PRED": [mtv_pred],
         }
     )
     print(f"SampleID: {sample_id}")
     print(f"GT_Path: {nii_gt_path}")
     print(f"PRED_Path: {nii_pred_path}")
-    print(f"Dice: {dice_sc}")
-    print(f"FPV: {false_pos_vol}")
-    print(f"FNV: {false_neg_vol}")
+    print(f"Dice: {dice_sc:.2f}")
+    print(f"FPV: {false_pos_vol:.2f}")
+    print(f"FNV: {false_neg_vol:.2f}")
+    print(f"MTV GT: {mtv_gt:.2f}")
+    print(f"MTV PRED: {mtv_pred:.2f}")
     print()
     return df
 
@@ -102,10 +116,11 @@ if __name__ == "__main__":
     From here: https://github.com/lab-midas/autoPET/blob/master/val_script.py
     Adapted for multiprocessing
     """
-    nii_gt_dir = "/path/to/gt_dir/"
-    nii_pred_dir = "/path/to/pred_dir/"
-    save_as = "/out_dir/seg_metrics.csv"
-    n_jobs = 16
+    nii_gt_dir = "/path/to/gt"
+    nii_pred_dir = "/path/to/pred"
+    save_as = "/path/to/out/seg_metrics.csv"
+    n_jobs = 8
+    print(f"Executing on {n_jobs} cores.")
 
     nii_pred_paths = natsorted(glob(os.path.join(nii_pred_dir, "*.nii*")))
     nii_gt_paths = natsorted(glob(os.path.join(nii_gt_dir, "*.nii*")))
@@ -131,7 +146,7 @@ if __name__ == "__main__":
     end_time = perf_counter()
     elapsed_time = end_time - start_time
     elapsed_time = timedelta(seconds=elapsed_time)
-    print(f"Done. Took {elapsed_time.seconds} seconds")
+    print(f"Done. Took {elapsed_time.seconds} seconds or {elapsed_time.seconds/60} minutes.")
 
     out_df = pd.concat(mp_df)
     out_df.to_csv(save_as, index=False)

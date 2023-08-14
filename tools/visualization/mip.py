@@ -86,8 +86,6 @@ def create_mip(array, axis):
 
 
 def make_pet_seg_mip(img_path, mask_path, spacing, view, out_dir, clip_suv, alpha):
-    print(f"Processing: {img_path}")
-
     # Read image and mask
     sitk_img = sitk.ReadImage(img_path)
     sitk_mask = sitk.ReadImage(mask_path)
@@ -105,6 +103,8 @@ def make_pet_seg_mip(img_path, mask_path, spacing, view, out_dir, clip_suv, alph
     # Clip SUV before making MIP
     if clip_suv:
         img = np.clip(img, 0, clip_suv)
+    else:
+        img = np.clip(img, 0, np.percentile(img, 99.9))
 
     # Create maximum intensity projection
     mip = create_mip(img, axis=view)
@@ -129,11 +129,10 @@ def make_pet_seg_mip(img_path, mask_path, spacing, view, out_dir, clip_suv, alph
         dpi=200,
     )
     plt.close()
+    print(f"Done with {img_path}")
 
 
 def make_pet_mip(img_path, out_dir, spacing, view, clip_suv):
-    print(f"Processing: {img_path}")
-
     # Read image
     sitk_img = sitk.ReadImage(img_path)
 
@@ -166,6 +165,7 @@ def make_pet_mip(img_path, out_dir, spacing, view, clip_suv):
         dpi=200,
     )
     plt.close()
+    print(f"Done with {img_path}")
 
 
 def make_mip_from_folder(img_dir, out_dir, spacing, view, clip_suv, alpha=None, mask_dir=None, n_jobs=1):

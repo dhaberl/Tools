@@ -126,7 +126,7 @@ def generate_from_folder(image_dir, output_dir, is_seg=False, spacing="auto", n_
 
 
 if __name__ == "__main__":
-    image_dir = "/media/dhaberl/T7/PhD_Projects/Holger_Kilian_Prostate_Cancer_Data/pre_post_Lu_MCRPC_ordered_output_from_David/SUV_nifti"
-    output_dir = "/media/dhaberl/T7/PhD_Projects/Holger_Kilian_Prostate_Cancer_Data/pre_post_Lu_MCRPC_ordered_output_from_David/MIP_rotational"
+    image_dir = "/path/to/imgdir"
+    output_dir = "/path/to/outdir"
 
     generate_from_folder(image_dir, output_dir, is_seg=False, spacing=[2, 2, 2], n_jobs=32)

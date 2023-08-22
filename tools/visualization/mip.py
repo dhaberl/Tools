@@ -85,7 +85,7 @@ def create_mip(array, axis):
     return mip
 
 
-def make_pet_seg_mip(img_path, mask_path, spacing, view, out_dir, clip_suv, alpha):
+def make_pet_seg_mip(img_path, mask_path, spacing, view, out_dir, clip_suv, alpha, cmap="coolwarm_r"):
     # Read image and mask
     sitk_img = sitk.ReadImage(img_path)
     sitk_mask = sitk.ReadImage(mask_path)
@@ -119,7 +119,7 @@ def make_pet_seg_mip(img_path, mask_path, spacing, view, out_dir, clip_suv, alph
 
     # Plot
     plt.imshow(mip, cmap="gray_r")
-    plt.imshow(mask, alpha=alpha, cmap="coolwarm_r")
+    plt.imshow(mask, alpha=alpha, cmap=cmap)
     plt.axis("off")
     plt.savefig(
         os.path.join(out_dir, f"{os.path.basename(img_path).split('.')[0]}.png"),
@@ -146,6 +146,8 @@ def make_pet_mip(img_path, out_dir, spacing, view, clip_suv):
     # Clip SUV before making MIP
     if clip_suv:
         img = np.clip(img, 0, clip_suv)
+    else:
+        img = np.clip(img, 0, np.percentile(img, 99.9))
 
     # Create maximum intensity projection
     mip = create_mip(img, axis=view)
@@ -168,7 +170,7 @@ def make_pet_mip(img_path, out_dir, spacing, view, clip_suv):
     print(f"Done with {img_path}")
 
 
-def make_mip_from_folder(img_dir, out_dir, spacing, view, clip_suv, alpha=None, mask_dir=None, n_jobs=1):
+def make_mip_from_folder(img_dir, out_dir, spacing, view, clip_suv, alpha=None, cmap=None, mask_dir=None, n_jobs=1):
     """Creates maximum intensity projections"""
     img_paths = natsorted(glob(os.path.join(img_dir, "*.nii.gz")))
 
@@ -177,7 +179,7 @@ def make_mip_from_folder(img_dir, out_dir, spacing, view, clip_suv, alpha=None, 
         mask_state = 1
         mask_paths = natsorted(glob(os.path.join(mask_dir, "*.nii.gz")))
         for img_path, mask_path in zip(img_paths, mask_paths):
-            mp_args.append((img_path, mask_path, spacing, view, out_dir, clip_suv, alpha))
+            mp_args.append((img_path, mask_path, spacing, view, out_dir, clip_suv, alpha, cmap))
     else:
         mask_state = 0
         for img_path in img_paths:
@@ -213,6 +215,6 @@ if __name__ == "__main__":
     #     out_dir="/path/to/out_dir",
     #     spacing=[2, 2, 2],
     #     view="coronal",
-    #     clip_suv=8,
-    #     n_jobs=16,
+    #     clip_suv=None,
+    #     n_jobs=32,
     # )

@@ -207,6 +207,7 @@ if __name__ == "__main__":
         alpha=0.3,
         mask_dir="/path/to/seg_dir",
         n_jobs=16,
+        cmap="coolwarm_r",
     )
 
     # Example for PET/SUV-MIP
@@ -215,6 +216,6 @@ if __name__ == "__main__":
     #     out_dir="/path/to/out_dir",
     #     spacing=[2, 2, 2],
     #     view="coronal",
-    #     clip_suv=None,
-    #     n_jobs=32,
+    #     clip_suv=8,
+    #     n_jobs=16,
     # )

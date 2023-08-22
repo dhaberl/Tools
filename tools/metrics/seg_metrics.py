@@ -146,7 +146,7 @@ if __name__ == "__main__":
     end_time = perf_counter()
     elapsed_time = end_time - start_time
     elapsed_time = timedelta(seconds=elapsed_time)
-    print(f"Done. Took {elapsed_time.seconds} seconds or {elapsed_time.seconds/60} minutes.")
+    print(f"Done. Took {elapsed_time.seconds} seconds or {elapsed_time.seconds/60:.0f} minutes.")
 
     out_df = pd.concat(mp_df)
     out_df.to_csv(save_as, index=False)

@@ -160,7 +160,7 @@ class SUVConerter:
             df.to_csv(save_as, index=False)
 
     def _dcm2niix(self, id, input_path, output_path):
-        cmd = f"dcm2niix -o {output_path} -z y -f {id + '_PET'} {input_path}"
+        cmd = f"dcm2niix -o {output_path} -z y -m y -f {id + '_PET'} {input_path}"
         call(cmd, shell=True)
 
     def convert_pet(self, output_dir):
@@ -303,15 +303,124 @@ class SUVConerter:
 
         return suv_map
 
+    def _compute_suvbw_ratio(
+        self, weight, scan_time, injection_time, half_life, injected_dose
+    ):
+        """
+        Compute SUVbw ratio based on given weight and injected dose decay.
+        Args:
+            represented as volume concentration MBq/mL.
+            weight: Patient body weight in kilograms.
+            scan_time (str): Acquisition time (start time of PET). Time stamp from DICOM file.
+            injection_time (str): Injection time; time when radiopharmaceutical dose was administered.
+            Time stamp from DICOM file.
+            half_life: Half life of used radiopharmaceutical in seconds.
+            injected_dose: Injected total dose of administered radiopharmaceutical in Mega Becquerel.
+        Returns:
+            suv_ratio: Float. Conversion factor to get SUV units from raw PET (MBq/mL)
+        """
+
+        # Assert time format
+        scan_time = self._assert_time_format(scan_time)
+        injection_time = self._assert_time_format(injection_time)
+        # Caprintlculate time in seconds between acqusition time (scan time) and injection time
+        time_difference = scan_time - injection_time
+        time_difference = time_difference.seconds
+
+        # Ensure parameter validity
+        check = [weight, time_difference, half_life, injected_dose]
+        for i in check:
+            assert i > 0, f"Invalid input. No negative values allowed. Value: {i}"
+            assert (
+                np.isnan(i) == False
+            ), f"Invalid input. No NaNs allowed. Value is NaN: {np.isnan(i)}"
+
+        assert weight < 1000, "Weight exceeds 1000 kg, did you really used kg unit?"
+
+        # Calculate decay for decay correction
+        decay = np.exp(-np.log(2) * time_difference / half_life)
+        # Calculate the dose decayed during procedure in Bq
+        injected_dose_decay = injected_dose * decay
+
+        # Weight in grams
+        weight = weight * 1000
+
+        # Calculate SUVbw
+        suv_ratio = weight / injected_dose_decay
+
+        return suv_ratio
+
+    def save_suv_ratio(self, save_as, half_life=None):
+
+        out_dict = {"ID": [], "SUV_ratio": []}
+
+        flg_missing = {"ID": [], "tag": []}
+        for id, dicom_dir in zip(self.ids, self.dicom_dir):
+            print(f"ID: {id}")
+
+            # Read out dicom tags
+            query_file = self._get_query_file(dicom_dir)
+            dicom_tags = self._get_dicom_tags(query_file)
+            weight = dicom_tags["weight"][0]
+            scan_time = dicom_tags["scan_time"][0]
+            injection_time = dicom_tags["injection_time"][0]
+            if not half_life:
+                half_life = dicom_tags["half_life"][0]
+            injected_dose = dicom_tags["injected_dose"][0]
+
+            # Check for missing tags
+            skip = 0
+            for key, val in zip(
+                ["weight", "scan_time", "injection_time", "half_life", "injected_dose"],
+                [weight, scan_time, injection_time, half_life, injected_dose],
+            ):
+                if (
+                    val is np.nan
+                ):  # ghetto solution, but dont know how to do this properly, be careful with missing dicom tags and inspect your data first (=> inspect_data function)
+                    print(f'Tag: "{key}" is missing. Cannot compute SUV. Skipping.')
+                    flg_missing["ID"].append(id)
+                    flg_missing["tag"].append(key)
+                    skip = 1
+            if skip:
+                continue
+
+            print(f"weight[kg]: {weight}")
+            print(f"scan_time[timestamp]: {scan_time}")
+            print(f"injection_time[timestamp]: {injection_time}")
+            print(f"half_life[s]: {half_life}")
+            print(f"injected_dose[MBq]: {injected_dose}")
+
+            # Compute SUV ratio
+            suv_ratio = self._compute_suvbw_ratio(
+                weight, scan_time, injection_time, half_life, injected_dose
+            )
+
+            out_dict["ID"].append(id)
+            out_dict["SUV_ratio"].append(suv_ratio)
+
+            print(f"SUV ratio: {suv_ratio}")
+            print()
+
+        out_df = pd.DataFrame(out_dict)
+        print(out_df)
+
+        if save_as:
+            out_df.to_csv(save_as, index=False)
+
 
 if __name__ == "__main__":
-    x = SUVConerter("/path/to/id_dicomdir.csv")
+    x = SUVConerter(batch_file="")
 
     # Inspect your data (reads out dicom tags)
-    x.inspect_data()
+    # x.inspect_data(
+    #     save_as=""
+    # )
 
     # Converts dicom PET to nifti PET
-    # x.convert_pet(output_dir="/path/to/out_dir")
+    # x.convert_pet(output_dir="")
 
     # Converts dicom PET to nifti PET and nifti SUV
-    # x.convert_suv(output_dir="/path/to/out_dir")
+    # x.convert_suv(output_dir="")
+
+    # Save out SUV ratio as csv file
+    # x.save_suv_ratio(save_as="")

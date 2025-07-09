@@ -160,7 +160,7 @@ class SUVConerter:
             df.to_csv(save_as, index=False)
 
     def _dcm2niix(self, id, input_path, output_path):
-        cmd = f"dcm2niix -o {output_path} -z y -m y -f {id + '_PET'} {input_path}"
+        cmd = f"dcm2niix -o {output_path} -z y -m y -f {str(id)} {input_path}"
         call(cmd, shell=True)
 
     def convert_pet(self, output_dir):
@@ -221,7 +221,7 @@ class SUVConerter:
             print(f"injected_dose[MBq]: {injected_dose}")
 
             # Read nifti PET
-            sitk_img = sitk.ReadImage(join(pet_dir, f"{id}_PET.nii.gz"))
+            sitk_img = sitk.ReadImage(join(pet_dir, f"{id}.nii.gz"))
             img_arr = sitk.GetArrayFromImage(sitk_img)
             img_arr = np.transpose(img_arr)
 
@@ -409,18 +409,60 @@ class SUVConerter:
 
 
 if __name__ == "__main__":
-    x = SUVConerter(batch_file="")
+    """
+    Input file is a CSV file containing two columns:
+    "ID" contains sample-ids, e.g. PatientA, PatientB, ..., PatientZ
+    "DICOMDIR" contains the path to the directory where the dicom files are stored, e.g. path/to/dicoms/patientA, ..., path/to/dicoms/patientB
+    """
 
+    x = SUVConerter(batch_file="path/to/input_file.csv")
+
+    # ----------------
     # Inspect your data (reads out dicom tags)
     # x.inspect_data(
-    #     save_as=""
+    #     "dicom_tags.csv"
     # )
+    # ----------------
 
+    # ----------------
     # Converts dicom PET to nifti PET
-    # x.convert_pet(output_dir="")
+    # x.convert_pet(
+    #     output_dir="path/to/out_dir",
+    # )
+    # ----------------
 
+    # ----------------
     # Converts dicom PET to nifti PET and nifti SUV
-    # x.convert_suv(output_dir="")
+    # x.convert_suv(
+    #     output_dir="path/to/out_dir",
+    #     half_life=None,
+    # )
+    # ----------------
 
+    # ----------------
     # Save out SUV ratio as csv file
-    # x.save_suv_ratio(save_as="")
+    # x.save_suv_ratio(
+    #     save_as="suv_ratio.csv"
+    # )
+    # ----------------
+
+    # ----------------
+    # Comment this out to apply SUV conversion factor to PET nifti images
+    # df = pd.read_csv("suv_ratio_brain.csv")
+    # print(df)
+
+    # pt_dir = "path/to/pet_dir"
+    # out_dir = "path/to/out_dir"
+
+    # for _, row in df.iterrows():
+    #     sample_id = row["ID"]
+    #     pt_path = join(pt_dir, f"*{sample_id}*")
+    #     print(pt_path)
+    #     sitk_img = sitk.ReadImage(pt_path)
+    #     img_arr = sitk.GetArrayFromImage(sitk_img)
+    #     suv_ratio = row["SUV_ratio"]
+    #     img_arr = img_arr * suv_ratio
+    #     sitk_out = sitk.GetImageFromArray(img_arr)
+    #     sitk_out.CopyInformation(sitk_img)
+    #     sitk.WriteImage(sitk_out, join(out_dir, f"{sample_id}.nii.gz"))
+    # ----------------

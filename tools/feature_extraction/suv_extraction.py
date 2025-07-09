@@ -67,7 +67,8 @@ def extract_suv(csv_path, save_as, n_jobs=1):
     print(out_df)
 
     # Save
-    out_df.to_csv(save_as, index=False)
+    # out_df.to_csv(save_as, index=False)
+    out_df.to_excel(save_as, index=False)
 
 
 if __name__ == "__main__":

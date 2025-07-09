@@ -60,6 +60,8 @@ def dice_score(mask1, mask2):
 
 
 def compute_metrics(sample_id, nii_gt_path, nii_pred_path):
+    print(f"SampleID: {sample_id}")
+
     # main function
     gt_array, voxel_vol = nii2numpy(nii_gt_path)
     pred_array, voxel_vol = nii2numpy(nii_pred_path)
@@ -68,7 +70,10 @@ def compute_metrics(sample_id, nii_gt_path, nii_pred_path):
     gt_array = (gt_array != 0).astype(np.uint8)
     pred_array = (pred_array != 0).astype(np.uint8)
 
-    false_neg_vol = false_neg_pix(gt_array, pred_array) * voxel_vol
+    if np.sum(gt_array) == 0:
+        false_neg_vol = np.nan
+    else:
+        false_neg_vol = false_neg_pix(gt_array, pred_array) * voxel_vol
     false_pos_vol = false_pos_pix(gt_array, pred_array) * voxel_vol
 
     mtv_gt = np.count_nonzero(gt_array) * voxel_vol
@@ -91,7 +96,6 @@ def compute_metrics(sample_id, nii_gt_path, nii_pred_path):
             "MTV_PRED": [mtv_pred],
         }
     )
-    print(f"SampleID: {sample_id}")
     print(f"GT_Path: {nii_gt_path}")
     print(f"PRED_Path: {nii_pred_path}")
     print(f"Dice: {dice_sc:.2f}")
@@ -119,7 +123,9 @@ if __name__ == "__main__":
 
     mp_args = []
     for nii_gt_path, nii_pred_path in zip(nii_gt_paths, nii_pred_paths):
-        mp_args.append((basename(nii_gt_path).split(".")[0], nii_gt_path, nii_pred_path))
+        mp_args.append(
+            (basename(nii_gt_path).split(".")[0], nii_gt_path, nii_pred_path)
+        )
 
     # Start time
     start_time = perf_counter()
@@ -132,7 +138,9 @@ if __name__ == "__main__":
     end_time = perf_counter()
     elapsed_time = end_time - start_time
     elapsed_time = timedelta(seconds=elapsed_time)
-    print(f"Done. Took {elapsed_time.seconds} seconds or {elapsed_time.seconds/60:.0f} minutes.")
+    print(
+        f"Done. Took {elapsed_time.seconds} seconds or {elapsed_time.seconds/60:.0f} minutes."
+    )
 
     out_df = pd.concat(mp_df)
     out_df.to_csv(save_as, index=False)

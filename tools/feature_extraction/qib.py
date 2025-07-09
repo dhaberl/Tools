@@ -73,6 +73,38 @@ class FeatureExtractor:
         suvmax = np.max(roi)
         return suvmax
 
+    def suvvar(self):
+        """
+        Calculates SUV variance
+        """
+        if self.empty:
+            return np.nan
+
+        roi = self.img[self.seg == 1]
+        suvvar = np.var(roi)
+        return suvvar
+
+    def suvrange(self):
+        """
+        Calculates SUV range
+        """
+        if self.empty:
+            return np.nan
+
+        suvrange = self.suvmax() - self.suvmin()
+        return suvrange
+
+    def suvsum(self):
+        """
+        Calculates SUV sum
+        """
+        if self.empty:
+            return np.nan
+
+        roi = self.img[self.seg == 1]
+        suvsum = np.sum(roi)
+        return suvsum
+
     def suvpeak(self):
         """
         Calculates SUVpeak
@@ -162,6 +194,15 @@ class FeatureExtractor:
             elif metric == "suvpeak":
                 suvpeak = self.suvpeak()
                 metric_dict[metric] = suvpeak
+            elif metric == "suvvar":
+                suvvar = self.suvvar()
+                metric_dict[metric] = suvvar
+            elif metric == "suvrange":
+                suvrange = self.suvrange()
+                metric_dict[metric] = suvrange
+            elif metric == "suvsum":
+                suvsum = self.suvsum()
+                metric_dict[metric] = suvsum
             elif metric == "mtv":
                 mtv = self.mtv()
                 metric_dict[metric] = mtv
@@ -189,7 +230,9 @@ class FeatureExtractor:
                         a = ic + i
                         b = jc + j
                         c = kc + k
-                        neighbors.append((a, b, c))  # add the neighbor to the neighbors list
+                        neighbors.append(
+                            (a, b, c)
+                        )  # add the neighbor to the neighbors list
 
         return neighbors
 
@@ -226,7 +269,9 @@ class FeatureExtractor:
                 l2 = combination[1]
                 l1_arr = np.where(self.seg == l1, l1, 0)
                 l2_arr = np.where(self.seg == l2, l2, 0)
-                d = self._pairwise_lesion_distance(l1_arr, l2_arr, self.sitk_seg.GetSpacing())
+                d = self._pairwise_lesion_distance(
+                    l1_arr, l2_arr, self.sitk_seg.GetSpacing()
+                )
                 pairwise_distances.append(d)
             # print(pairwise_distances)
             maximum_distance = np.max(pairwise_distances)
@@ -261,7 +306,11 @@ class FeatureExtractor:
         x_sp = spacing[0]
         y_sp = spacing[1]
         z_sp = spacing[2]
-        d2 = np.square((x1 - x2) * x_sp) + np.square((y1 - y2) * y_sp) + np.square((z1 - z2) * z_sp)
+        d2 = (
+            np.square((x1 - x2) * x_sp)
+            + np.square((y1 - y2) * y_sp)
+            + np.square((z1 - z2) * z_sp)
+        )
         d = np.sqrt(d2)
 
         return d
@@ -363,5 +412,51 @@ def test():
     )
 
 
+def run_from_directory():
+    from glob import glob
+    from os.path import basename, join
+
+    import pandas as pd
+    from natsort import natsorted
+
+    img_dir = "path/to/img_dir"
+    seg_dir = "path/to/seg_dir"
+
+    img_paths = natsorted(glob(join(img_dir, f"*.nii*")))
+    seg_paths = natsorted(glob(join(seg_dir, f"*.nii*")))
+
+    l = []
+    for i, (img_path, seg_path) in enumerate(zip(img_paths, seg_paths)):
+        print(basename(img_path), basename(seg_path))
+        roi = FeatureExtractor(img_path, seg_path)
+        d = roi.from_list(
+            metrics=[
+                "suvmax",
+                "suvmean",
+                "suvmin",
+                "suvrange",
+                "suvsum",
+                "suvvar",
+                "suvpeak",
+                "mtv",
+            ]
+        )
+        d["ID"] = basename(img_path).split(".")[0]
+
+        l.append(pd.DataFrame(d, index=[i]))
+
+    out_df = pd.concat(l)
+
+    columns = out_df.columns.tolist()
+    new_columns = [columns[-1]] + columns[:-1]
+
+    # Reorder columns in the DataFrame
+    out_df = out_df[new_columns]
+    out_df.to_csv(
+        "suv_parameters.csv",
+        index=False,
+    )
+
+
 if __name__ == "__main__":
-    test()
+    run_from_directory()

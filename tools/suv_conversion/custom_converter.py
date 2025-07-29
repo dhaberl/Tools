@@ -415,10 +415,13 @@ if __name__ == "__main__":
     "DICOMDIR" contains the path to the directory where the dicom files are stored, e.g. path/to/dicoms/patientA, ..., path/to/dicoms/patientB
     """
 
+    # Load batch file
     x = SUVConerter(batch_file="path/to/input_file.csv")
 
     # ----------------
     # Inspect your data (reads out dicom tags)
+    # This is recommended for SUV conversion, as it could be that tags are wrong or missing
+    # Please always check the dicom tags for validity
     # x.inspect_data(
     #     "dicom_tags.csv"
     # )
@@ -426,6 +429,7 @@ if __name__ == "__main__":
 
     # ----------------
     # Converts dicom PET to nifti PET
+    # Works the same for CT or MRI (any kind of DICOM Image Modality to NIFTI Image Modality)
     # x.convert_pet(
     #     output_dir="path/to/out_dir",
     # )
@@ -433,6 +437,7 @@ if __name__ == "__main__":
 
     # ----------------
     # Converts dicom PET to nifti PET and nifti SUV
+    # This outputs both nifti PET and nifti PET in SUV units (two seperate files)
     # x.convert_suv(
     #     output_dir="path/to/out_dir",
     #     half_life=None,
@@ -440,7 +445,10 @@ if __name__ == "__main__":
     # ----------------
 
     # ----------------
-    # Save out SUV ratio as csv file
+    # Save out SUV conversion factor in a csv file
+    # You can also just save out the SUV conversion factor instead of saving a copy of the PET in SUV units as nifti
+    # This is convenient in case you dont want to always save a nifti PET file and a nifti SUV file (e.g., due to file size restrictions)
+    # The SUV conversion factor can be applied to the PET, i.e. PET (SUV units) = PET * SUV conversion factor
     # x.save_suv_ratio(
     #     save_as="suv_ratio.csv"
     # )
